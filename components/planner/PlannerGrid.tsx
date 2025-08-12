@@ -42,37 +42,39 @@ export function PlannerGrid({ days, filteredTasks, laneByTaskId, laneCount, acti
         onDragEndUpdate(taskId, newStart, newEnd);
       }}
     >
-      <div className="grid grid-cols-7 gap-y-2 gap-x-0 select-none">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-          <div key={d} className="text-sm font-semibold text-center py-1">
-            {d}
-          </div>
-        ))}
-        {days.map((day) => {
+      <div className="w-full overflow-x-auto">
+        <div className="min-w-[840px] grid grid-cols-7 gap-y-2 gap-x-0 select-none sm:min-w-0">
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+            <div key={d} className="text-xs sm:text-sm font-semibold text-center py-1">
+              {d}
+            </div>
+          ))}
+          {days.map((day) => {
           const dayIso = day.toISOString();
           const isRange = !!dragSelectStart && !!dragSelectHover &&
             isWithinInterval(day, {
               start: dragSelectStart < dragSelectHover ? dragSelectStart : dragSelectHover,
               end: dragSelectStart < dragSelectHover ? dragSelectHover : dragSelectStart,
             });
-          return (
-            <DayCell
-              key={dayIso}
-              date={day}
-              dayId={dayIso}
-              tasks={filteredTasks.filter((t) => isWithinInterval(day, { start: new Date(t.start), end: new Date(t.end) }))}
-              laneByTaskId={laneByTaskId}
-              laneCount={laneCount}
-              onEdit={onEdit}
-              onMouseDownDay={onMouseDownDay}
-              onMouseEnterDay={onMouseEnterDay}
-              isInSelectingRange={isRange}
-              onStartResize={onStartResize}
-              onShowTooltip={onShowTooltip}
-              onHideTooltip={onHideTooltip}
-            />
-          );
-        })}
+            return (
+              <DayCell
+                key={dayIso}
+                date={day}
+                dayId={dayIso}
+                tasks={filteredTasks.filter((t) => isWithinInterval(day, { start: new Date(t.start), end: new Date(t.end) }))}
+                laneByTaskId={laneByTaskId}
+                laneCount={laneCount}
+                onEdit={onEdit}
+                onMouseDownDay={onMouseDownDay}
+                onMouseEnterDay={onMouseEnterDay}
+                isInSelectingRange={isRange}
+                onStartResize={onStartResize}
+                onShowTooltip={onShowTooltip}
+                onHideTooltip={onHideTooltip}
+              />
+            );
+          })}
+        </div>
       </div>
       <DragOverlay dropAnimation={null}>{activeTask ? <OverlayTask task={activeTask} /> : null}</DragOverlay>
     </DndContext>

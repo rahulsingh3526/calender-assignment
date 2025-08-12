@@ -41,6 +41,22 @@ export function TaskChip({ task, lane, currentDate, onStartResize, onEdit, onSho
     onHideTooltip();
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (!t) return;
+    onShowTooltip(task, { x: t.clientX, y: t.clientY });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (!t) return;
+    onShowTooltip(task, { x: t.clientX, y: t.clientY });
+  };
+
+  const handleTouchEnd = () => {
+    onHideTooltip();
+  };
+
   if (isStart) {
     return (
       <DraggableTaskChip
@@ -64,6 +80,9 @@ export function TaskChip({ task, lane, currentDate, onStartResize, onEdit, onSho
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       <div className={`${categoryColorClass[task.category]} w-full h-full flex items-center`}>
         {/* Continuation segment: keep color bar but omit repeated text */}
@@ -108,6 +127,22 @@ function DraggableTaskChip({ task, lane, colorClass, isEnd, onStartResize, onEdi
     onHideTooltip();
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (!t) return;
+    onShowTooltip(task, { x: t.clientX, y: t.clientY });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (!t) return;
+    onShowTooltip(task, { x: t.clientX, y: t.clientY });
+  };
+
+  const handleTouchEnd = () => {
+    onHideTooltip();
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -118,6 +153,9 @@ function DraggableTaskChip({ task, lane, colorClass, isEnd, onStartResize, onEdi
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       <button
         className="w-2 h-full cursor-ew-resize rounded-l-md bg-black/20"

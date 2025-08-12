@@ -34,7 +34,7 @@ export function DayCell({ date, dayId, tasks, laneByTaskId, onEdit, onMouseDownD
         onMouseDownDay(date);
       }}
       onMouseEnter={() => onMouseEnterDay(date)}
-      className={`border rounded-md h-28 p-0 relative ${isOver ? "ring-2 ring-sky-400" : ""} ${isInSelectingRange ? "bg-sky-50" : ""} ${isSameDay(date, new Date()) ? "ring-2 ring-blue-500 bg-blue-50 border-blue-300" : ""}`}
+      className={`border rounded-md h-24 sm:h-28 p-0 relative ${isOver ? "ring-2 ring-sky-400" : ""} ${isInSelectingRange ? "bg-sky-50" : ""} ${isSameDay(date, new Date()) ? "ring-2 ring-blue-500 bg-blue-50 border-blue-300" : ""}`}
     >
       <div className={`text-xs pl-1 pt-1 ${isSameDay(date, new Date()) ? "text-blue-600 font-bold bg-blue-100 rounded-full w-6 h-6 flex items-center justify-center" : "text-slate-500"}`}>
         {format(date, "d")}

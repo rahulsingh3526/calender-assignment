@@ -25,7 +25,7 @@ export function MonthNavigation({ currentMonth, onMonthChange }: MonthNavigation
                         new Date().getFullYear() === currentMonth.getFullYear();
 
   return (
-    <div className="flex items-center justify-center gap-4 mb-6">
+    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 mb-4 sm:mb-6">
       <button
         onClick={handlePreviousMonth}
         className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -34,7 +34,7 @@ export function MonthNavigation({ currentMonth, onMonthChange }: MonthNavigation
         <ChevronLeftIcon className="w-5 h-5" />
       </button>
       
-      <h2 className="text-xl font-semibold text-gray-800 min-w-[140px] text-center">
+      <h2 className="text-lg sm:text-xl font-semibold text-gray-800 min-w-[140px] text-center">
         {formatMonthYear(currentMonth)}
       </h2>
       
@@ -48,7 +48,7 @@ export function MonthNavigation({ currentMonth, onMonthChange }: MonthNavigation
 
       <button
         onClick={handleToday}
-        className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+        className={`px-3 py-1 text-xs sm:text-sm rounded-lg transition-colors ${
           isCurrentMonth 
             ? 'bg-blue-100 text-blue-700 border border-blue-200' 
             : 'bg-blue-500 text-white hover:bg-blue-600'

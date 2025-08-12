@@ -140,8 +140,8 @@ export default function PlannerPage() {
   const activeTask = activeTaskId ? tasks.find((t) => t.id === activeTaskId) ?? null : null;
 
   return (
-    <main className="min-h-screen p-6 md:p-10">
-      <h1 className="text-2xl font-bold mb-4">Month View Task Planner</h1>
+    <main className="min-h-screen p-4 sm:p-6 md:p-10">
+      <h1 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-center sm:text-left">Month View Task Planner</h1>
 
       <MonthNavigation 
         currentMonth={currentMonth}

@@ -15,7 +15,7 @@ export function Filters({ search, setSearch, categories, selectedCategories, set
   return (
     <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
       <input
-        className="border rounded-md px-3 py-2 w-full bg-white text-black"
+        className="border rounded-md px-3 py-2 w-full bg-white text-black text-sm"
         placeholder="Search tasks by name"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -39,7 +39,7 @@ export function Filters({ search, setSearch, categories, selectedCategories, set
           );
         })}
       </div>
-      <div className="flex gap-2 items-center">
+      <div className="flex gap-2 items-center flex-wrap">
         {[1, 2, 3].map((w) => (
           <Button
             key={w}
