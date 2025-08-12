@@ -15,7 +15,7 @@ export function Filters({ search, setSearch, categories, selectedCategories, set
   return (
     <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
       <input
-        className="border rounded-md px-3 py-2 w-full"
+        className="border rounded-md px-3 py-2 w-full bg-white text-black"
         placeholder="Search tasks by name"
         value={search}
         onChange={(e) => setSearch(e.target.value)}

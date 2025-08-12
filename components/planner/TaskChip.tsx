@@ -3,6 +3,7 @@
 import { CSS } from "@dnd-kit/utilities";
 import { useDraggable } from "@dnd-kit/core";
 import { isSameDay } from "date-fns";
+import { useState } from "react";
 import type { Category, Task } from "@/types/task";
 
 export type TaskChipProps = {
@@ -11,6 +12,8 @@ export type TaskChipProps = {
   currentDate: Date;
   onStartResize: (taskId: string, edge: "left" | "right") => void;
   onEdit: (task: Task) => void;
+  onShowTooltip: (task: Task, position: { x: number; y: number }) => void;
+  onHideTooltip: () => void;
 };
 
 const categoryColorClass: Record<Category, string> = {
@@ -20,11 +23,20 @@ const categoryColorClass: Record<Category, string> = {
   Completed: "bg-emerald-300",
 };
 
-export function TaskChip({ task, lane, currentDate, onStartResize, onEdit }: TaskChipProps) {
+export function TaskChip({ task, lane, currentDate, onStartResize, onEdit, onShowTooltip, onHideTooltip }: TaskChipProps) {
   const start = new Date(task.start);
   const end = new Date(task.end);
   const isStart = isSameDay(currentDate, start);
   const isEnd = isSameDay(currentDate, end);
+
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    onShowTooltip(task, { x: rect.left, y: rect.top });
+  };
+
+  const handleMouseLeave = () => {
+    onHideTooltip();
+  };
 
   if (isStart) {
     return (
@@ -35,6 +47,8 @@ export function TaskChip({ task, lane, currentDate, onStartResize, onEdit }: Tas
         isEnd={isEnd}
         onStartResize={onStartResize}
         onEdit={onEdit}
+        onShowTooltip={onShowTooltip}
+        onHideTooltip={onHideTooltip}
       />
     );
   }
@@ -44,6 +58,8 @@ export function TaskChip({ task, lane, currentDate, onStartResize, onEdit }: Tas
       className={`h-6 rounded-none flex items-center absolute left-0 right-0`}
       style={{ top: `${lane * (24 + 4)}px`, backgroundColor: undefined }}
       onDoubleClick={() => onEdit(task)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className={`${categoryColorClass[task.category]} w-full h-full flex items-center`}>
         {/* Continuation segment: keep color bar but omit repeated text */}
@@ -64,8 +80,27 @@ export function TaskChip({ task, lane, currentDate, onStartResize, onEdit }: Tas
   );
 }
 
-function DraggableTaskChip({ task, lane, colorClass, isEnd, onStartResize, onEdit }: { task: Task; lane: number; colorClass: string; isEnd: boolean; onStartResize: (taskId: string, edge: "left" | "right") => void; onEdit: (task: Task) => void }) {
+function DraggableTaskChip({ task, lane, colorClass, isEnd, onStartResize, onEdit, onShowTooltip, onHideTooltip }: { 
+  task: Task; 
+  lane: number; 
+  colorClass: string; 
+  isEnd: boolean; 
+  onStartResize: (taskId: string, edge: "left" | "right") => void; 
+  onEdit: (task: Task) => void;
+  onShowTooltip: (task: Task, position: { x: number; y: number }) => void;
+  onHideTooltip: () => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
+
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    onShowTooltip(task, { x: rect.left, y: rect.top });
+  };
+
+  const handleMouseLeave = () => {
+    onHideTooltip();
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -73,6 +108,8 @@ function DraggableTaskChip({ task, lane, colorClass, isEnd, onStartResize, onEdi
       className={`h-6 ${isEnd ? "rounded-r-md" : "rounded-none"} rounded-l-md flex items-center absolute left-0 right-0 ${colorClass} ${isDragging ? "opacity-70" : ""}`}
       style={{ transform: CSS.Translate.toString(transform), top: `${lane * (24 + 4)}px` }}
       onDoubleClick={() => onEdit(task)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <button
         className="w-2 h-full cursor-ew-resize rounded-l-md bg-black/20"

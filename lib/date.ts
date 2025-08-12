@@ -1,4 +1,4 @@
-import { addDays, endOfMonth, endOfWeek, isWithinInterval, startOfMonth, startOfWeek } from "date-fns";
+import { addDays, endOfMonth, endOfWeek, isWithinInterval, startOfMonth, startOfWeek, addMonths, format } from "date-fns";
 import type { Task } from "@/types/task";
 
 export function buildMonthGrid(baseDate: Date) {
@@ -7,6 +7,18 @@ export function buildMonthGrid(baseDate: Date) {
   const days: Date[] = [];
   for (let d = start; d <= end; d = addDays(d, 1)) days.push(d);
   return days;
+}
+
+export function getPreviousMonth(currentDate: Date): Date {
+  return addMonths(currentDate, -1);
+}
+
+export function getNextMonth(currentDate: Date): Date {
+  return addMonths(currentDate, 1);
+}
+
+export function formatMonthYear(date: Date): string {
+  return format(date, "MMMM yyyy");
 }
 
 export function taskOverlapsDay(task: Task, day: Date) {

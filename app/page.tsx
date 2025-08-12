@@ -5,6 +5,8 @@ import { addDays, isWithinInterval } from "date-fns";
 import { Filters } from "@/components/planner/Filters";
 import { CreateTaskDialog, EditTaskDialog } from "@/components/planner/TaskForms";
 import { PlannerGrid } from "@/components/planner/PlannerGrid";
+import { MonthNavigation } from "@/components/planner/MonthNavigation";
+import { TaskTooltip } from "@/components/planner/TaskTooltip";
 import { CATEGORIES } from "@/components/planner/constants";
 import { buildMonthGrid } from "@/lib/date";
 import { computeLanes } from "@/lib/lanes";
@@ -12,7 +14,7 @@ import { useLocalStorageState } from "@/hooks/useLocalStorageState";
 import type { Category, Task } from "@/types/task";
 
 export default function PlannerPage() {
-  const [currentMonth] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [tasks, setTasks] = useLocalStorageState<Task[]>("tasks", []);
   const [selection, setSelection] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -24,6 +26,11 @@ export default function PlannerPage() {
   const [dragSelectHover, setDragSelectHover] = useState<Date | null>(null);
   const [resizing, setResizing] = useState<{ taskId: string | null; edge: "left" | "right" | null }>({ taskId: null, edge: null });
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+
+  // Tooltip state
+  const [tooltipTask, setTooltipTask] = useState<Task | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
 
   const [filterCategories, setFilterCategories] = useState<Category[]>(CATEGORIES);
   const [filterWeeks, setFilterWeeks] = useState<1 | 2 | 3 | null>(null);
@@ -56,6 +63,17 @@ export default function PlannerPage() {
     setSelection({ start: rangeStart, end: rangeEnd });
     setIsCreateOpen(true);
   }
+
+  // Tooltip handlers
+  const handleShowTooltip = (task: Task, position: { x: number; y: number }) => {
+    setTooltipTask(task);
+    setTooltipPosition(position);
+    setIsTooltipVisible(true);
+  };
+
+  const handleHideTooltip = () => {
+    setIsTooltipVisible(false);
+  };
 
   useEffect(() => {
     function handleMouseUp() {
@@ -125,6 +143,11 @@ export default function PlannerPage() {
     <main className="min-h-screen p-6 md:p-10">
       <h1 className="text-2xl font-bold mb-4">Month View Task Planner</h1>
 
+      <MonthNavigation 
+        currentMonth={currentMonth}
+        onMonthChange={setCurrentMonth}
+      />
+
       <Filters
         search={search}
         setSearch={setSearch}
@@ -155,6 +178,8 @@ export default function PlannerPage() {
         onStartResize={startResize}
         onEdit={openEdit}
         onDragEndUpdate={applyDrag}
+        onShowTooltip={handleShowTooltip}
+        onHideTooltip={handleHideTooltip}
       />
 
       <CreateTaskDialog
@@ -177,6 +202,12 @@ export default function PlannerPage() {
         setDraftCategory={setDraftCategory}
         categories={CATEGORIES}
         onSave={saveEdit}
+      />
+
+      <TaskTooltip
+        task={tooltipTask!}
+        isVisible={isTooltipVisible && !!tooltipTask}
+        position={tooltipPosition}
       />
     </main>
   );

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
+    "@heroicons/react": "^2.2.0",
     "@radix-ui/react-dialog": "^1.1.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -35,4 +36,3 @@
     "typescript": "^5.4.5"
   }
 }
-

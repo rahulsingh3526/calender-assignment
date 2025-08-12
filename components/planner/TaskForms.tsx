@@ -22,13 +22,13 @@ export function CreateTaskDialog({ open, onOpenChange, draftName, setDraftName, 
         </DialogHeader>
         <div className="flex flex-col gap-3">
           <input
-            className="border rounded-md px-3 py-2"
+            className="border rounded-md px-3 py-2 bg-white text-black"
             placeholder="Task name"
             value={draftName}
             onChange={(e) => setDraftName(e.target.value)}
           />
           <select
-            className="border rounded-md px-3 py-2"
+            className="border rounded-md px-3 py-2 bg-white text-black"
             value={draftCategory}
             onChange={(e) => setDraftCategory(e.target.value as Category)}
           >
@@ -70,13 +70,13 @@ export function EditTaskDialog({ open, onOpenChange, draftName, setDraftName, dr
         </DialogHeader>
         <div className="flex flex-col gap-3">
           <input
-            className="border rounded-md px-3 py-2"
+            className="border rounded-md px-3 py-2 bg-white text-black"
             placeholder="Task name"
             value={draftName}
             onChange={(e) => setDraftName(e.target.value)}
           />
           <select
-            className="border rounded-md px-3 py-2"
+            className="border rounded-md px-3 py-2 bg-white text-black"
             value={draftCategory}
             onChange={(e) => setDraftCategory(e.target.value as Category)}
           >

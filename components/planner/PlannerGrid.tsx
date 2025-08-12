@@ -20,9 +20,11 @@ export type PlannerGridProps = {
   onStartResize: (taskId: string, edge: "left" | "right") => void;
   onEdit: (task: Task) => void;
   onDragEndUpdate: (taskId: string, newStart: Date, newEnd: Date) => void;
+  onShowTooltip: (task: Task, position: { x: number; y: number }) => void;
+  onHideTooltip: () => void;
 };
 
-export function PlannerGrid({ days, filteredTasks, laneByTaskId, laneCount, activeTask, setActiveTaskId, dragSelectStart, dragSelectHover, onMouseDownDay, onMouseEnterDay, onStartResize, onEdit, onDragEndUpdate, }: PlannerGridProps) {
+export function PlannerGrid({ days, filteredTasks, laneByTaskId, laneCount, activeTask, setActiveTaskId, dragSelectStart, dragSelectHover, onMouseDownDay, onMouseEnterDay, onStartResize, onEdit, onDragEndUpdate, onShowTooltip, onHideTooltip }: PlannerGridProps) {
   return (
     <DndContext
       onDragStart={(e: DragStartEvent) => setActiveTaskId(String(e.active.id))}
@@ -66,6 +68,8 @@ export function PlannerGrid({ days, filteredTasks, laneByTaskId, laneCount, acti
               onMouseEnterDay={onMouseEnterDay}
               isInSelectingRange={isRange}
               onStartResize={onStartResize}
+              onShowTooltip={onShowTooltip}
+              onHideTooltip={onHideTooltip}
             />
           );
         })}
