@@ -20,8 +20,8 @@ export function TaskTooltip({ task, isVisible, position }: TaskTooltipProps) {
     <div
       className="fixed z-50 bg-gray-900 text-white text-sm rounded-lg p-3 shadow-lg max-w-xs pointer-events-none"
       style={{
-        left: position.x + 10,
-        top: position.y - 10,
+        left: position.x + 12,
+        top: position.y + 16,
       }}
     >
       <div className="font-semibold mb-2">{task.name}</div>

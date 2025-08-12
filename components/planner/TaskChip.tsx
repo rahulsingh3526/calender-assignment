@@ -30,8 +30,11 @@ export function TaskChip({ task, lane, currentDate, onStartResize, onEdit, onSho
   const isEnd = isSameDay(currentDate, end);
 
   const handleMouseEnter = (e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    onShowTooltip(task, { x: rect.left, y: rect.top });
+    onShowTooltip(task, { x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    onShowTooltip(task, { x: e.clientX, y: e.clientY });
   };
 
   const handleMouseLeave = () => {
@@ -59,6 +62,7 @@ export function TaskChip({ task, lane, currentDate, onStartResize, onEdit, onSho
       style={{ top: `${lane * (24 + 4)}px`, backgroundColor: undefined }}
       onDoubleClick={() => onEdit(task)}
       onMouseEnter={handleMouseEnter}
+      onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
       <div className={`${categoryColorClass[task.category]} w-full h-full flex items-center`}>
@@ -93,8 +97,11 @@ function DraggableTaskChip({ task, lane, colorClass, isEnd, onStartResize, onEdi
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
 
   const handleMouseEnter = (e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    onShowTooltip(task, { x: rect.left, y: rect.top });
+    onShowTooltip(task, { x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    onShowTooltip(task, { x: e.clientX, y: e.clientY });
   };
 
   const handleMouseLeave = () => {
@@ -109,6 +116,7 @@ function DraggableTaskChip({ task, lane, colorClass, isEnd, onStartResize, onEdi
       style={{ transform: CSS.Translate.toString(transform), top: `${lane * (24 + 4)}px` }}
       onDoubleClick={() => onEdit(task)}
       onMouseEnter={handleMouseEnter}
+      onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
       <button
