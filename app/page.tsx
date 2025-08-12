@@ -81,6 +81,30 @@ export default function PlannerPage() {
     return bySearch.filter((t) => isWithinInterval(new Date(t.start), { start: now, end: horizon }) || isWithinInterval(new Date(t.end), { start: now, end: horizon }));
   }, [tasks, filterCategories, filterWeeks, search]);
 
+  // Assign stable lanes to tasks so multi-day bars align across days
+  const { laneByTaskId, laneCount } = useMemo(() => {
+    const sorted = [...filteredTasks].sort((a, b) => {
+      const as = new Date(a.start).getTime();
+      const bs = new Date(b.start).getTime();
+      if (as !== bs) return as - bs;
+      return new Date(a.end).getTime() - new Date(b.end).getTime();
+    });
+    const laneEndTime: number[] = [];
+    const map: Record<string, number> = {};
+    for (const t of sorted) {
+      const startMs = new Date(t.start).getTime();
+      const endMs = new Date(t.end).getTime();
+      let placedLane = 0;
+      while (placedLane < laneEndTime.length && startMs <= laneEndTime[placedLane]) {
+        placedLane += 1;
+      }
+      map[t.id] = placedLane;
+      if (placedLane === laneEndTime.length) laneEndTime.push(endMs);
+      else laneEndTime[placedLane] = Math.max(laneEndTime[placedLane], endMs);
+    }
+    return { laneByTaskId: map, laneCount: laneEndTime.length } as const;
+  }, [filteredTasks]);
+
   function openCreateModal(rangeStart: Date, rangeEnd: Date) {
     setDraftName("");
     setDraftCategory("To Do");
@@ -233,6 +257,8 @@ export default function PlannerPage() {
                 date={day}
                 dayId={dayIso}
                 tasks={filteredTasks.filter((t) => overlaps(t, day))}
+                laneByTaskId={laneByTaskId}
+                laneCount={laneCount}
                 onDragSelect={(start, end) => openCreateModal(start, end)}
                 onResize={resizeTask}
                 onEdit={openEdit}
@@ -340,6 +366,8 @@ type DayCellProps = {
   date: Date;
   dayId: string;
   tasks: Task[];
+  laneByTaskId: Record<string, number>;
+  laneCount: number;
   onDragSelect: (start: Date, end: Date) => void;
   onResize: (taskId: string, edge: "left" | "right", targetDay: Date) => void;
   onEdit: (task: Task) => void;
@@ -349,7 +377,7 @@ type DayCellProps = {
   onStartResize: (taskId: string, edge: "left" | "right") => void;
 };
 
-function DayCell({ date, dayId, tasks, onDragSelect, onResize, onEdit, onMouseDownDay, onMouseEnterDay, isInSelectingRange, onStartResize }: DayCellProps) {
+function DayCell({ date, dayId, tasks, laneByTaskId, laneCount, onDragSelect, onResize, onEdit, onMouseDownDay, onMouseEnterDay, isInSelectingRange, onStartResize }: DayCellProps) {
   const { isOver, setNodeRef } = useDroppable({ id: dayId });
 
   return (
@@ -367,16 +395,24 @@ function DayCell({ date, dayId, tasks, onDragSelect, onResize, onEdit, onMouseDo
       className={`border rounded-md h-28 p-0 relative ${isOver ? "ring-2 ring-sky-400" : ""} ${isInSelectingRange ? "bg-sky-50" : ""}`}
     >
       <div className="text-xs text-slate-500 pl-1 pt-1">{format(date, "d")}</div>
-      <div className="absolute inset-x-0 bottom-1 top-6 flex flex-col gap-1">
+      <div className="absolute inset-x-0 bottom-1 top-6">
         {tasks.map((t) => (
-          <TaskRow key={t.id} task={t} currentDate={date} onResize={onResize} onEdit={onEdit} onStartResize={onStartResize} />
+          <TaskRow
+            key={t.id}
+            task={t}
+            lane={(laneByTaskId[t.id] ?? 0)}
+            currentDate={date}
+            onResize={onResize}
+            onEdit={onEdit}
+            onStartResize={onStartResize}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function TaskRow({ task, currentDate, onResize, onEdit, onStartResize }: { task: Task; currentDate: Date; onResize: DayCellProps["onResize"]; onEdit: (task: Task) => void; onStartResize: (taskId: string, edge: "left" | "right") => void }) {
+function TaskRow({ task, lane, currentDate, onResize, onEdit, onStartResize }: { task: Task; lane: number; currentDate: Date; onResize: DayCellProps["onResize"]; onEdit: (task: Task) => void; onStartResize: (taskId: string, edge: "left" | "right") => void }) {
   const start = new Date(task.start);
   const end = new Date(task.end);
   const isStart = isSameDay(currentDate, start);
@@ -390,14 +426,16 @@ function TaskRow({ task, currentDate, onResize, onEdit, onStartResize }: { task:
   };
 
   if (isStart) {
-    return <DraggableTaskChip task={task} colorClass={color[task.category]} onResize={onResize} onEdit={onEdit} currentDate={currentDate} isEnd={isEnd} onStartResize={onStartResize} />;
+    return <DraggableTaskChip task={task} lane={lane} colorClass={color[task.category]} onResize={onResize} onEdit={onEdit} currentDate={currentDate} isEnd={isEnd} onStartResize={onStartResize} />;
   }
   return (
     <div
       data-task-chip="true"
-      className={`h-6 rounded-none flex items-center ${color[task.category]}`}
+      className={`h-6 rounded-none flex items-center absolute left-0 right-0`}
+      style={{ top: `${lane * (24 + 4)}px`, backgroundColor: undefined }}
       onDoubleClick={() => onEdit(task)}
     >
+      <div className={`${color[task.category]} w-full h-full flex items-center`}> 
       <div className="flex-1 px-2 text-xs truncate">{task.name}</div>
       {isEnd && (
         <button
@@ -410,18 +448,19 @@ function TaskRow({ task, currentDate, onResize, onEdit, onStartResize }: { task:
           title="Resize end"
         />
       )}
+      </div>
     </div>
   );
 }
 
-function DraggableTaskChip({ task, colorClass, onResize, onEdit, currentDate, isEnd, onStartResize }: { task: Task; colorClass: string; onResize: DayCellProps["onResize"]; onEdit: (task: Task) => void; currentDate: Date; isEnd: boolean; onStartResize: (taskId: string, edge: "left" | "right") => void }) {
+function DraggableTaskChip({ task, lane, colorClass, onResize, onEdit, currentDate, isEnd, onStartResize }: { task: Task; lane: number; colorClass: string; onResize: DayCellProps["onResize"]; onEdit: (task: Task) => void; currentDate: Date; isEnd: boolean; onStartResize: (taskId: string, edge: "left" | "right") => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id });
   return (
     <div
       ref={setNodeRef}
       data-task-chip="true"
-      className={`h-6 ${isEnd ? "rounded-r-md" : "rounded-none"} rounded-l-md flex items-center ${colorClass} ${isDragging ? "opacity-70" : ""}`}
-      style={{ transform: CSS.Translate.toString(transform) }}
+      className={`h-6 ${isEnd ? "rounded-r-md" : "rounded-none"} rounded-l-md flex items-center absolute left-0 right-0 ${colorClass} ${isDragging ? "opacity-70" : ""}`}
+      style={{ transform: CSS.Translate.toString(transform), top: `${lane * (24 + 4)}px` }}
       onDoubleClick={() => onEdit(task)}
     >
       <button
