@@ -106,11 +106,8 @@ export default function PlannerPage() {
         const start = new Date(t.start);
         const end = new Date(t.end);
         if (edge === "left") {
-          if (targetDay > start) {
-            const nextStart = targetDay <= end ? targetDay : end;
-            return { ...t, start: nextStart.toISOString() };
-          }
-          return t;
+          const nextStart = targetDay <= end ? targetDay : end;
+          return { ...t, start: nextStart.toISOString() };
         }
         const nextEnd = targetDay >= start ? targetDay : start;
         return { ...t, end: nextEnd.toISOString() };

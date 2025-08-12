@@ -46,7 +46,8 @@ export function TaskChip({ task, lane, currentDate, onStartResize, onEdit }: Tas
       onDoubleClick={() => onEdit(task)}
     >
       <div className={`${categoryColorClass[task.category]} w-full h-full flex items-center`}>
-        <div className="flex-1 px-2 text-xs truncate">{task.name}</div>
+        {/* Continuation segment: keep color bar but omit repeated text */}
+        <div className="flex-1 px-2 text-xs truncate" aria-hidden="true" />
         {isEnd && (
           <button
             className="w-2 h-full cursor-ew-resize rounded-r-md bg-black/20"
