@@ -356,7 +356,13 @@ function DayCell({ date, dayId, tasks, onDragSelect, onResize, onEdit, onMouseDo
     <div
       id={dayId}
       ref={setNodeRef}
-      onMouseDown={() => onMouseDownDay(date)}
+      onMouseDown={(e) => {
+        // Only start selection when clicking on empty day area, not on existing tasks
+        if (e.button !== 0) return; // left-click only
+        const target = e.target as HTMLElement | null;
+        if (target && target.closest('[data-task-chip="true"]')) return;
+        onMouseDownDay(date);
+      }}
       onMouseEnter={() => onMouseEnterDay(date)}
       className={`border rounded-md h-28 p-0 relative ${isOver ? "ring-2 ring-sky-400" : ""} ${isInSelectingRange ? "bg-sky-50" : ""}`}
     >
@@ -387,7 +393,11 @@ function TaskRow({ task, currentDate, onResize, onEdit, onStartResize }: { task:
     return <DraggableTaskChip task={task} colorClass={color[task.category]} onResize={onResize} onEdit={onEdit} currentDate={currentDate} isEnd={isEnd} onStartResize={onStartResize} />;
   }
   return (
-    <div className={`h-6 rounded-none flex items-center ${color[task.category]}`} onDoubleClick={() => onEdit(task)}>
+    <div
+      data-task-chip="true"
+      className={`h-6 rounded-none flex items-center ${color[task.category]}`}
+      onDoubleClick={() => onEdit(task)}
+    >
       <div className="flex-1 px-2 text-xs truncate">{task.name}</div>
       {isEnd && (
         <button
@@ -409,6 +419,7 @@ function DraggableTaskChip({ task, colorClass, onResize, onEdit, currentDate, is
   return (
     <div
       ref={setNodeRef}
+      data-task-chip="true"
       className={`h-6 ${isEnd ? "rounded-r-md" : "rounded-none"} rounded-l-md flex items-center ${colorClass} ${isDragging ? "opacity-70" : ""}`}
       style={{ transform: CSS.Translate.toString(transform) }}
       onDoubleClick={() => onEdit(task)}
