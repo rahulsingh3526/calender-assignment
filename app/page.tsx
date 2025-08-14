@@ -5,6 +5,7 @@ import { addDays, isWithinInterval } from "date-fns";
 import { Filters } from "@/components/planner/Filters";
 import { CreateTaskDialog, EditTaskDialog } from "@/components/planner/TaskForms";
 import { PlannerGrid } from "@/components/planner/PlannerGrid";
+import { CategoryBoard } from "@/components/planner/CategoryBoard";
 import { MonthNavigation } from "@/components/planner/MonthNavigation";
 import { TaskTooltip } from "@/components/planner/TaskTooltip";
 import { CATEGORIES } from "@/components/planner/constants";
@@ -17,6 +18,7 @@ export default function PlannerPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [tasks, setTasks] = useLocalStorageState<Task[]>("tasks", []);
   const [selection, setSelection] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
+  const [focusedDay, setFocusedDay] = useState<Date>(new Date());
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [draftCategory, setDraftCategory] = useState<Category>("To Do");
@@ -61,6 +63,7 @@ export default function PlannerPage() {
     setDraftName("");
     setDraftCategory("To Do");
     setSelection({ start: rangeStart, end: rangeEnd });
+    setFocusedDay(rangeStart);
     setIsCreateOpen(true);
   }
 
@@ -99,7 +102,8 @@ export default function PlannerPage() {
       start: selection.start.toISOString(),
       end: selection.end.toISOString(),
     };
-    setTasks((prev) => [...prev, newTask]);
+    // Prepend so it appears on top in the CategoryBoard list for that day
+    setTasks((prev) => [newTask, ...prev]);
     setIsCreateOpen(false);
   }
 
@@ -156,6 +160,25 @@ export default function PlannerPage() {
         setSelectedCategories={setFilterCategories}
         filterWeeks={filterWeeks}
         setFilterWeeks={setFilterWeeks}
+      />
+
+      {/* Top category board for the focused day */}
+      <CategoryBoard
+        day={focusedDay}
+        onChangeDay={(d) => {
+          setFocusedDay(d);
+          setCurrentMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+        }}
+        tasks={filteredTasks.filter(
+          (t) =>
+            (new Date(t.start).toDateString() <= focusedDay.toDateString() &&
+              new Date(t.end).toDateString() >= focusedDay.toDateString())
+        )}
+        idOrder={tasks.reduce((acc, t, idx) => {
+          acc[t.id] = idx; // after createTask we unshift, so lower idx means newer; we invert in CategoryBoard
+          return acc;
+        }, {} as Record<string, number>)}
+        onEdit={openEdit}
       />
 
       <PlannerGrid
