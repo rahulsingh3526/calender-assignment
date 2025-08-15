@@ -1,8 +1,10 @@
 "use client";
 
 import { addDays, format } from "date-fns";
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, useDraggable, useDroppable } from "@dnd-kit/core";
+import { useState, useMemo } from "react";
 import { CATEGORIES } from "@/components/planner/constants";
-import type { Task } from "@/types/task";
+import type { Category, Task } from "@/types/task";
 
 export type CategoryBoardProps = {
   day: Date;
@@ -10,9 +12,16 @@ export type CategoryBoardProps = {
   tasks: Task[];
   idOrder: Record<string, number>; // larger index means newer task
   onEdit: (task: Task) => void;
+  onMoveCategory?: (taskId: string, newCategory: Category, insertBeforeTaskId?: string) => void;
 };
 
-export function CategoryBoard({ day, onChangeDay, tasks, idOrder, onEdit }: CategoryBoardProps) {
+export function CategoryBoard({ day, onChangeDay, tasks, idOrder, onEdit, onMoveCategory }: CategoryBoardProps) {
+  const [activeDragTask, setActiveDragTask] = useState<Task | null>(null);
+  const taskById = useMemo(() => {
+    const map: Record<string, Task> = {};
+    for (const t of tasks) map[t.id] = t;
+    return map;
+  }, [tasks]);
   const tasksByCategory: Record<string, Task[]> = CATEGORIES.reduce((acc, cat) => {
     acc[cat] = [];
     return acc;
@@ -22,9 +31,7 @@ export function CategoryBoard({ day, onChangeDay, tasks, idOrder, onEdit }: Cate
     (tasksByCategory[t.category] ??= []).push(t);
   }
 
-  for (const cat of CATEGORIES) {
-    tasksByCategory[cat]?.sort((a, b) => (idOrder[b.id] ?? 0) - (idOrder[a.id] ?? 0));
-  }
+  // Respect the provided order of tasks; do not sort here so drop insertion is preserved
 
   return (
     <section className="mb-4 sm:mb-6">
@@ -52,34 +59,89 @@ export function CategoryBoard({ day, onChangeDay, tasks, idOrder, onEdit }: Cate
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {CATEGORIES.map((cat) => (
-          <div key={cat} className="bg-gray-50 border rounded-lg p-3 min-h-[140px]">
-            <div className="text-sm font-semibold mb-2">{cat}</div>
-            <div className="flex flex-col gap-2">
-              {(tasksByCategory[cat] ?? []).map((t) => (
-                <button
-                  key={t.id}
-                  className="text-left w-full rounded-md border bg-white hover:bg-gray-50 px-3 py-2 shadow-sm"
-                  onClick={() => onEdit(t)}
-                  title="Edit task"
-                >
-                  <div className="text-sm font-medium truncate">{t.name}</div>
-                  <div className="text-xs text-gray-500 truncate">
-                    {format(new Date(t.start), "yyyy-MM-dd")} 
-                    <span className="mx-1">→</span>
-                    {format(new Date(t.end), "yyyy-MM-dd")}
-                  </div>
-                </button>
-              ))}
-              {(tasksByCategory[cat] ?? []).length === 0 && (
-                <div className="text-xs text-gray-400">No tasks</div>
-              )}
+      <DndContext
+        onDragStart={(e: DragStartEvent) => {
+          const activeId = String(e.active.id);
+          const taskId = activeId.startsWith("task:") ? activeId.slice(5) : activeId;
+          setActiveDragTask(taskById[taskId] ?? null);
+        }}
+        onDragEnd={(e: DragEndEvent) => {
+          if (!onMoveCategory) return;
+          const overId = e.over?.id ? String(e.over.id) : null;
+          const activeId = String(e.active.id);
+          if (!overId) return;
+          const taskId = activeId.startsWith("task:") ? activeId.slice(5) : activeId;
+          
+          if (overId.startsWith("cat:")) {
+            // dropped into empty space in a category
+            const newCategory = overId.slice(4) as Category;
+            onMoveCategory(taskId, newCategory, undefined); // undefined = append
+          } else if (overId.startsWith("task:")) {
+            // dropped on another task
+            const overTaskId = overId.slice(5);
+            const overTask = taskById[overTaskId];
+            if (!overTask) return;
+            const newCategory = overTask.category;
+            onMoveCategory(taskId, newCategory, overTaskId); // insert before this task id
+          }
+          
+          setActiveDragTask(null);
+        }}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {CATEGORIES.map((cat) => (
+            <CategoryColumn key={cat} category={cat} tasks={tasksByCategory[cat] ?? []} onEdit={onEdit} />
+          ))}
+        </div>
+        <DragOverlay dropAnimation={null}>
+          {activeDragTask ? (
+            <div className="text-left w-56 rounded-md border bg-white px-3 py-2 shadow-lg ring-1 ring-black/10">
+              <div className="text-sm font-medium truncate">{activeDragTask.name}</div>
+              <div className="text-xs text-gray-500 truncate">
+                {format(new Date(activeDragTask.start), "yyyy-MM-dd")} <span className="mx-1">→</span> {format(new Date(activeDragTask.end), "yyyy-MM-dd")}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </section>
+  );
+}
+
+function CategoryColumn({ category, tasks, onEdit }: { category: Category; tasks: Task[]; onEdit: (task: Task) => void }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `cat:${category}` });
+  return (
+    <div ref={setNodeRef} className={`bg-gray-50 border rounded-lg p-3 min-h-[140px] ${isOver ? "ring-2 ring-sky-400" : ""}`}>
+      <div className="text-sm font-semibold mb-2">{category}</div>
+      <div className="flex flex-col gap-2">
+        {tasks.map((t) => (
+          <SortableContext key={t.id} task={t} onEdit={onEdit} />
+        ))}
+        {tasks.length === 0 && <div className="text-xs text-gray-400">No tasks</div>}
+      </div>
+    </div>
+  );
+}
+
+function SortableContext({ task, onEdit }: { task: Task; onEdit: (task: Task) => void }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `task:${task.id}` });
+  const { setNodeRef: setDropRef, isOver } = useDroppable({ id: `task:${task.id}` });
+  return (
+    <div
+       ref={(node) => {
+        setNodeRef(node);
+        setDropRef(node); // <-- add this so the card is droppable
+      }}
+      className={`text-left w-full rounded-md border bg-white hover:bg-gray-50 px-3 py-2 shadow-sm ${isDragging ? "opacity-70" : ""}`}
+      onClick={() => onEdit(task)}
+      {...listeners}
+      {...attributes}
+    >
+      <div className="text-sm font-medium truncate">{task.name}</div>
+      <div className="text-xs text-gray-500 truncate">
+        {format(new Date(task.start), "yyyy-MM-dd")} <span className="mx-1">→</span> {format(new Date(task.end), "yyyy-MM-dd")}
+      </div>
+    </div>
   );
 }
 

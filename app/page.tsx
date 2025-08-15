@@ -63,7 +63,6 @@ export default function PlannerPage() {
     setDraftName("");
     setDraftCategory("To Do");
     setSelection({ start: rangeStart, end: rangeEnd });
-    setFocusedDay(rangeStart);
     setIsCreateOpen(true);
   }
 
@@ -104,6 +103,8 @@ export default function PlannerPage() {
     };
     // Prepend so it appears on top in the CategoryBoard list for that day
     setTasks((prev) => [newTask, ...prev]);
+    // Now that the task is actually created, align the focused day to its start so the top board reflects it
+    setFocusedDay(selection.start);
     setIsCreateOpen(false);
   }
 
@@ -179,6 +180,23 @@ export default function PlannerPage() {
           return acc;
         }, {} as Record<string, number>)}
         onEdit={openEdit}
+        onMoveCategory={(taskId, newCategory, insertBeforeTaskId) =>
+          setTasks((prev) => {
+            const list = [...prev];
+            const fromIdx = list.findIndex((t) => t.id === taskId);
+            if (fromIdx === -1) return prev;
+            const moved = { ...list[fromIdx], category: newCategory };
+            list.splice(fromIdx, 1);
+            if (insertBeforeTaskId) {
+              const toIdx = list.findIndex((t) => t.id === insertBeforeTaskId);
+              const targetIdx = toIdx === -1 ? list.length : toIdx;
+              list.splice(targetIdx, 0, moved);
+            } else {
+              list.push(moved);
+            }
+            return list;
+          })
+        }
       />
 
       <PlannerGrid
